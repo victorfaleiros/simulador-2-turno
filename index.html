@@ -483,5 +483,18 @@ tfoot td{font-weight:600}
 })();
 </script>
 
+<script>
+/* Contador de acessos: registra só a origem do link (via), o site de onde veio e um código aleatório do navegador. Nada pessoal. */
+(function(){try{
+  var q=new URLSearchParams(location.search);var via=(q.get('via')||'').slice(0,40);
+  if(!via&&document.referrer){try{var h=new URL(document.referrer).hostname;if(/instagram|facebook|fb\./.test(h))via='instagram';else if(/whatsapp/.test(h))via='whatsapp';else if(/t\.co|twitter|x\.com/.test(h))via='x';}catch(e){}}
+  var ref='';try{ref=new URL(document.referrer).hostname.slice(0,120)}catch(e){}
+  var ap='';try{ap=localStorage.getItem('sim2t_ap');if(!ap){ap=Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('sim2t_ap',ap)}}catch(e){}
+  if(sessionStorage.getItem('sim2t_visto'))return;try{sessionStorage.setItem('sim2t_visto','1')}catch(e){}
+  fetch('https://oumcsjqiuitzosrgnhbr.supabase.co/rest/v1/simulador_visitas',{method:'POST',keepalive:true,
+    headers:{'apikey':'sb_publishable_K-AO_54wSlVX5_iBNuaRAQ_JkCpo_zc','Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({pagina:'simulador-2-turno',via:via||null,ref:ref||null,aparelho:ap||null})}).catch(function(){});
+}catch(e){}})();
+</script>
 </body>
 </html>
