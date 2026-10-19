@@ -7,7 +7,7 @@
 <meta name="description" content="Distribua os votos do 1º turno, mexa na abstenção e nos brancos e nulos e veja quem vence o 2º turno de 2026 entre Flávio Bolsonaro e Lula.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Simulador do 2º turno de 2026">
-<meta property="og:description" content="Monte o seu cenário para Flávio x Lula com os números oficiais do 1º turno: transferência de votos, abstenção e brancos e nulos.">
+<meta property="og:description" content="Monte o seu cenário para Flávio x Lula com os números oficiais do 1º turno: transferência de votos, abstenção e brancos e nulos. Por @vfaleiros.">
 <meta property="og:url" content="https://victorfaleiros.github.io/simulador-2-turno/">
 <meta property="og:locale" content="pt_BR">
 <meta name="twitter:card" content="summary">
@@ -45,6 +45,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .wrap{max-width:920px;margin:0 auto}
 h1{font-size:20px;font-weight:600;margin:20px 0 4px;text-wrap:balance}
 .sub{color:var(--muted);margin:0 0 14px;max-width:70ch}
+.byline{margin:0 0 10px;font-size:14px;font-weight:500}
+.byline a{color:var(--flavio);text-decoration:none;font-weight:700;border-bottom:1.5px solid var(--flavio)}
+.byline a:hover{opacity:.85}
 h2{font-size:16px;font-weight:600;margin:34px 0 6px}
 p{margin:0 0 10px;max-width:78ch}
 .num{font-variant-numeric:tabular-nums}
@@ -125,6 +128,7 @@ tfoot td{font-weight:600}
 <body>
 <div class="wrap">
   <h1>Simulador do 2º turno de 2026</h1>
+  <p class="byline">por Victor Faleiros · <a href="https://www.instagram.com/vfaleiros/">@vfaleiros</a> no Instagram</p>
   <p class="sub">Flávio Bolsonaro e Lula disputam o 2º turno em 25 de outubro. Distribua os votos do 1º turno, mexa na abstenção e nos brancos e nulos, e o placar recalcula na hora. É aritmética sobre o resultado oficial, não pesquisa nem previsão.</p>
 
   <div class="placar" id="placar">
@@ -138,12 +142,12 @@ tfoot td{font-weight:600}
   </div>
 
   <h2>Ponto de partida</h2>
-  <p>Escolha uma pesquisa para preencher os controles com a migração que ela mediu: para quem vão os eleitores de Cury, Renan, Caiado, Zema e dos demais, quantos deles votam em branco ou nulo e, quando a pesquisa mediu, o que fazem os brancos e nulos e os ausentes do 1º turno. Depois ajuste o que quiser; qualquer controle que você mover sai da pesquisa.</p>
+  <p>Ao abrir, os controles já vêm preenchidos com a pesquisa AtlasIntel/Bloomberg (13 a 18/10), a mais completa até agora, e a abstenção com a variação de 2022. Escolha outra pesquisa para preencher os controles com a migração que ela mediu: para quem vão os eleitores de Cury, Renan, Caiado, Zema e dos demais, quantos deles votam em branco ou nulo e, quando a pesquisa mediu, o que fazem os brancos e nulos e os ausentes do 1º turno. Depois ajuste o que quiser; qualquer controle que você mover sai da pesquisa.</p>
   <div class="chips" id="presets"></div>
   <p class="aviso" id="presetNota" style="margin-top:10px"></p>
 
   <h2>Para onde vão os votos do 1º turno</h2>
-  <p>Cada controle diz que fatia dos eleitores de um candidato vota em Flávio no 2º turno; o resto vota em Lula. Os dois finalistas começam fiéis aos próprios eleitores, os quatro candidatos de esquerda (UP, PSTU, PCB e PCO) começam 100% com Lula e os outros seis divididos ao meio. Os brancos e nulos entram mais abaixo.</p>
+  <p>Cada controle diz que fatia dos eleitores de um candidato vota em Flávio no 2º turno; o resto vota em Lula. Os quatro candidatos de esquerda (UP, PSTU, PCB e PCO) ficam 100% com Lula em qualquer cenário. O botão Restaurar volta ao ponto neutro: finalistas fiéis, esquerda com Lula, demais divididos ao meio. Os brancos e nulos entram mais abaixo.</p>
   <div class="eyebrow">Atalhos</div>
   <div class="chips">
     <button class="chip" id="btRestaurar">Restaurar (finalistas fiéis, esquerda com Lula, demais 50/50)</button>
@@ -244,15 +248,15 @@ tfoot td{font-weight:600}
   // ----- Estado -----
   const padraoSplit=()=>{const o={};CANDS.forEach(c=>o[c.id]=c.fin==='F'?100:c.fin==='L'?0:typeof c.padrao==='number'?c.padrao:50);return o};
   let st={split:padraoSplit(),abst2:ABS1_PCT,novos:50,bnOutros:0,bnConv:0,bnSplit:50,preset:null};
-  let doLink=false;
+  let doLink=false,carregado=false;
   try{const h=location.hash.replace(/^#/,'');if(h.indexOf('c=')>=0){const q=new URLSearchParams(h);const c=(q.get('c')||'').split('-').map(Number);
     if(c.length===CANDS.length&&c.every(v=>isFinite(v))){CANDS.forEach((cd,i)=>st.split[cd.id]=cl(c[i],0,100));
       st.abst2=cl(q.get('a'),10,35);st.novos=cl(q.get('n'),0,100);st.bnOutros=cl(q.get('o'),0,100);st.bnConv=cl(q.get('v'),0,100);st.bnSplit=cl(q.get('p'),0,100);
       st.preset=q.get('q')||null;doLink=true}}}catch(e){}
-  try{const s=doLink?null:JSON.parse(localStorage.getItem('sim2t2026v2')||'null');
+  try{const s=doLink?null:JSON.parse(localStorage.getItem('sim2t2026v3')||'null');
     if(s&&s.split&&typeof s.abst2==='number'){CANDS.forEach(c=>{if(typeof s.split[c.id]==='number')st.split[c.id]=cl(s.split[c.id],0,100)});
       st.abst2=cl(s.abst2,10,35);st.novos=cl(s.novos,0,100);st.bnOutros=cl(s.bnOutros,0,100);st.bnConv=cl(s.bnConv,0,100);st.bnSplit=cl(s.bnSplit,0,100);
-      st.preset=typeof s.preset==='string'?s.preset:null}}catch(e){}
+      st.preset=typeof s.preset==='string'?s.preset:null;carregado=true}}catch(e){}
 
   // ----- Pesquisas com migração por candidato do 1º turno: [% Flávio, % Lula, % branco/nulo] -----
   const PRESETS=[
@@ -269,15 +273,17 @@ tfoot td{font-weight:600}
       cands:{outros:[46,27,23]},extra:'Mediu Cury, Renan e Caiado juntos (46% Flávio, 27% Lula, 23% branco ou nulo); o mesmo vale para todos os demais.'},
     {id:'verita',nome:'Veritá',periodo:'12 a 16/10',amostra:'15.554 entrevistas, BR-01107/2026',pendente:'A Veritá divulgou só o resultado (Flávio 51,1% x Lula 48,9% dos válidos); a tabela de migração por candidato ainda não está disponível.'}
   ];
-  function aplicaPreset(p){
-    if(p.pendente)return;
+  function setPreset(p){
     st.split=padraoSplit();let bnPond=0;
     OUTROS.forEach(c=>{if(typeof c.padrao==='number')return;const [F,L,bn]=p.cands[c.id]||p.cands.outros;st.split[c.id]=Math.round(F/(F+L)*100);bnPond+=c.votos*bn/(F+L+bn)});
     st.bnOutros=Math.round(bnPond/O*100);
     if(p.brancos){st.bnConv=p.brancos.conv;st.bnSplit=p.brancos.F}else{st.bnConv=0;st.bnSplit=50}
     if(typeof p.novos==='number')st.novos=p.novos;
-    st.preset=p.id;render();
+    st.preset=p.id;
   }
+  function aplicaPreset(p){if(p.pendente)return;setPreset(p);render()}
+  // padrão de quem abre pela primeira vez: AtlasIntel + abstenção com a variação de 2022
+  if(!doLink&&!carregado){setPreset(PRESETS.find(x=>x.id==='atlas'));st.abst2=ABS1_PCT+VAR2022}
   const elPresets=document.getElementById('presets');
   PRESETS.forEach(p=>{const b=document.createElement('button');b.className='chip';b.id='preset-'+p.id;b.type='button';
     b.textContent=`${p.nome} (${p.periodo})`+(p.pendente?' · aguardando tabela':'');if(p.pendente){b.disabled=true;b.style.opacity='.55';b.style.cursor='not-allowed';b.title=p.pendente}
@@ -289,7 +295,7 @@ tfoot td{font-weight:600}
       '<span style="color:var(--faint)">Veritá (12 a 16/10): '+PRESETS.find(x=>x.id==='verita').pendente+'</span>';return}
     $('presetNota').innerHTML=`Preenchido com <b>${p.nome}</b> (${p.periodo}, ${p.amostra}): os controles dos demais candidatos e a fatia deles que vota em branco ou nulo seguem a pesquisa${p.brancos?', assim como os brancos e nulos do 1º turno':''}${typeof p.novos==='number'?' e os eleitores que deixam de se abster':''}. Flávio e Lula seguem fiéis aos próprios eleitores, porque a pesquisa não mede a troca entre eles de forma comparável, e os eleitores de UP, PSTU, PCB e PCO ficam 100% com Lula. ${p.extra||''}`;
   }
-  function salvar(){try{localStorage.setItem('sim2t2026v2',JSON.stringify(st))}catch(e){}}
+  function salvar(){try{localStorage.setItem('sim2t2026v3',JSON.stringify(st))}catch(e){}}
   function linkCenario(){const q=new URLSearchParams();q.set('c',CANDS.map(c=>Math.round(st.split[c.id]*10)/10).join('-'));
     q.set('a',st.abst2.toFixed(2));q.set('n',st.novos);q.set('o',st.bnOutros);q.set('v',st.bnConv);q.set('p',st.bnSplit);if(st.preset)q.set('q',st.preset);
     return location.origin+location.pathname+'#'+q.toString()}
