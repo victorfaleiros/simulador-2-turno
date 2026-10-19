@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="Distribua os votos do 1º turno, mexa na abstenção e nos brancos e nulos e veja quem vence o 2º turno de 2026 entre Flávio Bolsonaro e Lula.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Simulador do 2º turno de 2026">
+<meta property="og:description" content="Monte o seu cenário para Flávio x Lula com os números oficiais do 1º turno: transferência de votos, abstenção e brancos e nulos.">
+<meta property="og:url" content="https://victorfaleiros.github.io/simulador-2-turno/">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Simulador do 2º turno 2026</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: uma coluna de 920px; placar fixo no topo; controles em grade de dois cartões que vira uma coluna no celular */
+:root{
+  color-scheme:dark;
+  --bg:#0b0d12; --panel:#13161d; --panel-2:#1b1f29; --line:#272c38; --fg:#e9ebf1; --muted:#9aa2b3; --faint:#6a7384;
+  --flavio:#5ea6f7; --lula:#f28060; --flavio-soft:rgba(94,166,247,.16); --lula-soft:rgba(242,128,96,.16);
+  --bar1:#b4bcd2; --bar2:#6c7795; --track:#2a3040; --thumb:#ffffff; --btn:#1b1f29; --btn-on:#2a3142;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#f4f5f8; --panel:#ffffff; --panel-2:#eef0f5; --line:#d8dce6; --fg:#131722; --muted:#5a6375; --faint:#8b93a5;
+    --flavio:#1d6fd4; --lula:#d9542c; --flavio-soft:rgba(29,111,212,.12); --lula-soft:rgba(217,84,44,.12);
+    --bar1:#4a5577; --bar2:#a9b1c7; --track:#dfe3ec; --thumb:#ffffff; --btn:#f3f4f8; --btn-on:#e2e6ef;
+  }
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f4f5f8; --panel:#ffffff; --panel-2:#eef0f5; --line:#d8dce6; --fg:#131722; --muted:#5a6375; --faint:#8b93a5;
+  --flavio:#1d6fd4; --lula:#d9542c; --flavio-soft:rgba(29,111,212,.12); --lula-soft:rgba(217,84,44,.12);
+  --bar1:#4a5577; --bar2:#a9b1c7; --track:#dfe3ec; --thumb:#ffffff; --btn:#f3f4f8; --btn-on:#e2e6ef;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:20px;font-weight:600;margin:20px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 14px;max-width:70ch}
+h2{font-size:16px;font-weight:600;margin:34px 0 6px}
+p{margin:0 0 10px;max-width:78ch}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+button.chip{font:inherit;font-size:13px;color:var(--fg);background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.chip:hover{background:var(--btn-on)}
+button.chip:focus-visible,input:focus-visible{outline:2px solid var(--flavio);outline-offset:2px}
+button.chip.on{background:var(--btn-on);border-color:var(--muted)}
+
+/* Placar */
+.placar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px;margin-top:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.placar .top{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start}
+.placar .nome{font-size:12px;color:var(--muted)}
+.placar .pct{font-size:26px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.placar .mi{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.placar .lado-l{text-align:left}.placar .lado-r{text-align:right}
+.placar .quem{text-align:center;font-size:13px;padding-top:2px}
+.placar .quem b{font-weight:600}
+.c-f{color:var(--flavio)}.c-l{color:var(--lula)}
+.barra{position:relative;height:14px;border-radius:7px;overflow:hidden;background:var(--lula);margin:10px 0 8px}
+.barra .f{position:absolute;inset:0 auto 0 0;background:var(--flavio);transition:width .15s}
+.barra .meio{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--bg);opacity:.9}
+.placar .rodape{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+@media (max-width:520px){.placar .top{grid-template-columns:1fr 1fr}.placar .quem{grid-column:1/-1;order:3;padding-top:4px}.placar .pct{font-size:22px}}
+
+/* Cartões */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.card .cab{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:6px}
+.card .cab .t{font-weight:500}
+.card .cab .d{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.card .pe{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;margin-top:6px;font-variant-numeric:tabular-nums}
+.card .pe.neutro{color:var(--muted)}
+.card.esp{grid-column:1/-1}
+
+/* Sliders */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:var(--track);margin:8px 0;cursor:pointer}
+input[type=range].split{background:linear-gradient(90deg,var(--flavio) var(--p,50%),var(--lula) var(--p,50%))}
+input[type=range].fill{background:linear-gradient(90deg,var(--muted) var(--p,50%),var(--track) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--thumb);border:2px solid var(--panel);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--thumb);border:2px solid var(--panel);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-track{background:transparent}
+
+/* Gráfico */
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 10px 8px;position:relative;margin-top:12px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{font-family:var(--font);font-size:11px;fill:var(--muted)}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .b1{fill:var(--bar1)}.chart .b2{fill:var(--bar2)}
+.chart .bp{fill:var(--panel);stroke:var(--fg);stroke-width:1.5}
+.chart .hit{fill:transparent}
+.chart .hit:hover{fill:var(--flavio-soft)}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:6px 4px 0}
+.legenda span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legenda .l1::before{background:var(--bar1)}.legenda .l2::before{background:var(--bar2)}.legenda .lp::before{background:var(--panel);border:1.5px solid var(--fg);box-sizing:border-box}
+.tip{position:absolute;pointer-events:none;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.3);font-variant-numeric:tabular-nums}
+.tip b{font-weight:600}
+.tip .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* Texto de resultado e tabela */
+.res{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
+.res p:last-child{margin:0}
+.tabela{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:500;color:var(--muted);font-size:12px}
+tfoot td{font-weight:600}
+.fontes{font-size:12px;color:var(--faint);margin-top:28px;max-width:78ch}
+.fontes a{color:var(--muted)}
+.aviso{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.barra .f{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <h1>Simulador do 2º turno de 2026</h1>
+  <p class="sub">Flávio Bolsonaro e Lula disputam o 2º turno em 25 de outubro. Distribua os votos do 1º turno, mexa na abstenção e nos brancos e nulos, e o placar recalcula na hora. É aritmética sobre o resultado oficial, não pesquisa nem previsão.</p>
+
+  <div class="placar" id="placar">
+    <div class="top">
+      <div class="lado-l"><div class="nome">Flávio Bolsonaro</div><div class="pct c-f" id="pF">—</div><div class="mi" id="miF">—</div></div>
+      <div class="quem" id="quem">—</div>
+      <div class="lado-r"><div class="nome">Lula</div><div class="pct c-l" id="pL">—</div><div class="mi" id="miL">—</div></div>
+    </div>
+    <div class="barra"><div class="f" id="barF" style="width:50%"></div><div class="meio"></div></div>
+    <div class="rodape"><span id="rod1">1º turno: Flávio 47,03% · Lula 45,16%</span><span id="rod2">—</span></div>
+  </div>
+
+  <h2>Ponto de partida</h2>
+  <p>Escolha uma pesquisa para preencher os controles com a migração que ela mediu: para quem vão os eleitores de Cury, Renan, Caiado, Zema e dos demais, quantos deles votam em branco ou nulo e, quando a pesquisa mediu, o que fazem os brancos e nulos e os ausentes do 1º turno. Depois ajuste o que quiser; qualquer controle que você mover sai da pesquisa.</p>
+  <div class="chips" id="presets"></div>
+  <p class="aviso" id="presetNota" style="margin-top:10px"></p>
+
+  <h2>Para onde vão os votos do 1º turno</h2>
+  <p>Cada controle diz que fatia dos eleitores de um candidato vota em Flávio no 2º turno; o resto vota em Lula. Os dois finalistas começam fiéis aos próprios eleitores, os quatro candidatos de esquerda (UP, PSTU, PCB e PCO) começam 100% com Lula e os outros seis divididos ao meio. Os brancos e nulos entram mais abaixo.</p>
+  <div class="eyebrow">Atalhos</div>
+  <div class="chips">
+    <button class="chip" id="btRestaurar">Restaurar (finalistas fiéis, esquerda com Lula, demais 50/50)</button>
+    <button class="chip" id="btEmpatar">Empatar: dividir os demais no ponto de virada</button>
+  </div>
+  <div class="grid" id="cands" style="margin-top:12px"></div>
+
+  <h2>Abstenção no 2º turno</h2>
+  <p>No 1º turno, 21,08% do eleitorado não votou. Mova a abstenção do 2º turno: se ela cair, aparecem eleitores novos e o segundo controle diz para quem eles vão; se subir, o segundo controle diz de que lado saem os que deixam de votar, e o ponto de partida é a proporção dos votos de cada um, que não muda os percentuais. O gráfico mostra a abstenção em cada turno das eleições presidenciais desde 1989.</p>
+  <div class="eyebrow">Referências</div>
+  <div class="chips">
+    <button class="chip" id="btAbsIgual">Igual ao 1º turno (21,08%)</button>
+    <button class="chip" id="btAbs2022">Variação de 2022 (−0,36 p.p.)</button>
+    <button class="chip" id="btAbsMedia">Variação média, 1989–2022 (+1,88 p.p.)</button>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="card">
+      <div class="cab"><span class="t">Abstenção no 2º turno</span><span class="d" id="absAbs">—</span></div>
+      <input type="range" id="slAbs" class="fill" min="10" max="35" step="0.01" aria-label="Abstenção no 2º turno">
+      <div class="pe neutro"><span id="absPct">—</span><span id="absDelta">—</span></div>
+    </div>
+    <div class="card">
+      <div class="cab"><span class="t" id="novosTit">Para quem vão os eleitores que deixam de se abster</span><span class="d" id="novosQtd">—</span></div>
+      <input type="range" id="slNovos" class="split" min="0" max="100" step="1" aria-label="Divisão dos eleitores novos">
+      <div class="pe"><span class="c-f" id="novosF">—</span><span class="c-l" id="novosL">—</span></div>
+    </div>
+  </div>
+  <p class="aviso" id="novosNota" style="margin-top:10px"></p>
+  <div class="chart" id="chart"></div>
+
+  <h2>Brancos e nulos no 2º turno</h2>
+  <p>No 1º turno, 5,98 milhões de pessoas votaram em branco ou nulo, 4,77% de quem compareceu. Aqui você decide quantos desses escolhem um finalista agora e quantos eleitores dos outros dez candidatos passam a votar em branco ou nulo. O que sobra deles é dividido pelos controles de cada candidato, lá em cima.</p>
+  <div class="eyebrow">Atalhos</div>
+  <div class="chips">
+    <button class="chip" id="btBnIgual">Usar o mesmo percentual do 1º turno (4,77% do comparecimento)</button>
+    <button class="chip" id="btBnZero">Ninguém muda de ideia</button>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="card">
+      <div class="cab"><span class="t">Eleitores dos demais candidatos que votam em branco ou nulo</span><span class="d" id="bnOutrosD">—</span></div>
+      <input type="range" id="slBnOutros" class="fill" min="0" max="100" step="1" aria-label="Eleitores dos demais candidatos que votam em branco ou nulo">
+    </div>
+    <div class="card">
+      <div class="cab"><span class="t">Brancos e nulos do 1º turno que escolhem um candidato</span><span class="d" id="bnConvD">—</span></div>
+      <input type="range" id="slBnConv" class="fill" min="0" max="100" step="1" aria-label="Brancos e nulos do 1º turno que escolhem um candidato">
+    </div>
+    <div class="card">
+      <div class="cab"><span class="t">Para quem vão esses eleitores</span></div>
+      <input type="range" id="slBnSplit" class="split" min="0" max="100" step="1" aria-label="Divisão dos brancos e nulos que escolhem um candidato">
+      <div class="pe"><span class="c-f" id="bnF">—</span><span class="c-l" id="bnL">—</span></div>
+    </div>
+  </div>
+  <p class="aviso" id="bnRes" style="margin-top:10px"></p>
+
+  <div class="res">
+    <p id="txt1"></p>
+    <p id="txt2"></p>
+    <div class="chips" style="margin-top:12px"><button class="chip" id="btCopiar">Copiar link do meu cenário</button><button class="chip" id="btCompartilhar" hidden>Compartilhar</button><span class="aviso" id="copiadoNota" style="align-self:center"></span></div>
+  </div>
+
+  <p style="margin-top:14px">A tabela mostra para onde vão os votos de cada candidato no cenário escolhido.</p>
+  <div class="tabela"><table id="tab"><thead><tr><th>Candidato</th><th>1º turno</th><th class="c-f">Flávio</th><th class="c-l">Lula</th><th>Branco ou nulo</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div>
+
+  <p class="fontes">Fontes: totalização oficial do 1º turno de 2026 do TSE (eleitorado 158.745.502; comparecimento 125.275.835; abstenção 33.469.244; brancos 2.300.798; nulos 3.674.249), conforme publicada pela <a href="https://www.cartacapital.com.br/politica/tse-encerra-apuracao-do-1o-turno/">CartaCapital</a>. Série histórica de abstenção por turno: <a href="https://www.cnnbrasil.com.br/politica/abstencao-cresceu-entre-1o-e-2o-turno-em-todas-as-eleicoes-presidenciais-desde-1989/">CNN Brasil</a> e <a href="https://www.gazetadopovo.com.br/eleicoes/2022/abstencao-votos-brancos-e-nulos-no-segundo-turno-da-eleicao-presidencial-de-2022/">Gazeta do Povo</a>, com dados do TSE. Brancos e nulos no 2º turno de 2018: 9,58% do comparecimento. Migração de votos por candidato: <a href="https://jovempan.com.br/politica/para-quem-vao-os-votos-de-cury-renan-santos-e-caiado-no-2o-turno-veja-o-poderdata/">PoderData</a>, <a href="https://www.infomoney.com.br/politica/atlasintel-para-onde-foram-os-votos-de-caiado-renan-zema-e-cury-no-2o-turno/">AtlasIntel</a>, <a href="https://www.band.com.br/politica/eleicoes/flavio-lidera-migracao-de-votos-de-caiado-e-renan-lula-herda-mais-com-cury">Quaest</a>, <a href="https://aloalobahia.com/noticias/2026/10/13/pesquisa-mostra-para-onde-vao-os-votos-de-caiado-zema-renan-santos-e-augusto-cury/">Nexus/BTG</a> e <a href="https://ncnews.com.br/2026/10/17/lula-x-flavio-votos-cury-renan-caiado/">Datafolha</a>. Para cada candidato, a fatia que vai a Flávio é calculada só entre quem escolheu um dos dois; indecisos ficam de fora. Suas escolhas ficam salvas só neste navegador.</p>
+  <p class="fontes" style="margin-top:10px">Simulador feito por Victor Faleiros. Compartilhe o link do seu cenário e compare com o de outras pessoas.</p>
+</div>
+
+<script>
+(function(){
+  // ----- Dados oficiais do 1º turno (TSE) -----
+  const E=158745502, ABS1=33469244, COMP1=125275835, BR1=2300798, NU1=3674249, BN1=BR1+NU1;
+  const ABS1_PCT=ABS1/E*100;
+  const CANDS=[
+    {id:'flavio',nome:'Flávio Bolsonaro',partido:'PL',votos:56104503,fin:'F'},
+    {id:'lula',nome:'Lula',partido:'PT',votos:53879538,fin:'L'},
+    {id:'cury',nome:'Augusto Cury',partido:'Avante',votos:3448569},
+    {id:'renan',nome:'Renan Santos',partido:'Missão',votos:2675887},
+    {id:'caiado',nome:'Ronaldo Caiado',partido:'PSD',votos:2605148},
+    {id:'zema',nome:'Romeu Zema',partido:'Novo',votos:326488},
+    {id:'samara',nome:'Samara Martins',partido:'UP',votos:122911,padrao:0},
+    {id:'hertz',nome:'Hertz Dias',partido:'PSTU',votos:43103,padrao:0},
+    {id:'clariana',nome:'Clariana Barão',partido:'DC',votos:40043},
+    {id:'edmilson',nome:'Edmilson Costa',partido:'PCB',votos:22693,padrao:0},
+    {id:'grassi',nome:'Wilson Grassi',partido:'Democrata',votos:16881},
+    {id:'rui',nome:'Rui Costa Pimenta',partido:'PCO',votos:15024,padrao:0}
+  ];
+  const VALID1=CANDS.reduce((s,c)=>s+c.votos,0);
+  const OUTROS=CANDS.filter(c=>!c.fin);
+  const O=OUTROS.reduce((s,c)=>s+c.votos,0);
+  const HIST=[
+    {ano:1989,t1:11.93,t2:14.39},{ano:1994,t1:17.77,t2:null},{ano:1998,t1:21.49,t2:null},
+    {ano:2002,t1:17.74,t2:20.47},{ano:2006,t1:16.75,t2:18.99},{ano:2010,t1:18.12,t2:21.50},
+    {ano:2014,t1:19.39,t2:21.10},{ano:2018,t1:20.32,t2:21.29},{ano:2022,t1:20.95,t2:20.59}
+  ];
+  const VAR2022=20.59-20.95;
+  const VARMEDIA=HIST.filter(h=>h.t2!=null).reduce((s,h)=>s+(h.t2-h.t1),0)/HIST.filter(h=>h.t2!=null).length;
+
+  // ----- Estado -----
+  const padraoSplit=()=>{const o={};CANDS.forEach(c=>o[c.id]=c.fin==='F'?100:c.fin==='L'?0:typeof c.padrao==='number'?c.padrao:50);return o};
+  let st={split:padraoSplit(),abst2:ABS1_PCT,novos:50,bnOutros:0,bnConv:0,bnSplit:50,preset:null};
+  let doLink=false;
+  try{const h=location.hash.replace(/^#/,'');if(h.indexOf('c=')>=0){const q=new URLSearchParams(h);const c=(q.get('c')||'').split('-').map(Number);
+    if(c.length===CANDS.length&&c.every(v=>isFinite(v))){CANDS.forEach((cd,i)=>st.split[cd.id]=cl(c[i],0,100));
+      st.abst2=cl(q.get('a'),10,35);st.novos=cl(q.get('n'),0,100);st.bnOutros=cl(q.get('o'),0,100);st.bnConv=cl(q.get('v'),0,100);st.bnSplit=cl(q.get('p'),0,100);
+      st.preset=q.get('q')||null;doLink=true}}}catch(e){}
+  try{const s=doLink?null:JSON.parse(localStorage.getItem('sim2t2026v2')||'null');
+    if(s&&s.split&&typeof s.abst2==='number'){CANDS.forEach(c=>{if(typeof s.split[c.id]==='number')st.split[c.id]=cl(s.split[c.id],0,100)});
+      st.abst2=cl(s.abst2,10,35);st.novos=cl(s.novos,0,100);st.bnOutros=cl(s.bnOutros,0,100);st.bnConv=cl(s.bnConv,0,100);st.bnSplit=cl(s.bnSplit,0,100);
+      st.preset=typeof s.preset==='string'?s.preset:null}}catch(e){}
+
+  // ----- Pesquisas com migração por candidato do 1º turno: [% Flávio, % Lula, % branco/nulo] -----
+  const PRESETS=[
+    {id:'poderdata',nome:'PoderData',periodo:'16 a 18/10',amostra:'3.000 entrevistas, BR-02586/2026',
+      cands:{cury:[56,31,9],renan:[36,29,29],caiado:[46,19,25],outros:[36,31,24]}},
+    {id:'atlas',nome:'AtlasIntel/Bloomberg',periodo:'13 a 18/10',amostra:'4.998 entrevistas, BR-02418/2026',
+      cands:{cury:[42.4,52.1,5.6],renan:[33.5,31.9,34.6],caiado:[69.8,24.5,5.7],outros:[61.3,30.7,8]},
+      brancos:{conv:60,F:65},novos:42,extra:'Também mediu os brancos e nulos do 1º turno (38,7% Flávio, 21,1% Lula, 40,2% seguem fora) e quem não votou (Lula 55,7%, Flávio 40,2%).'},
+    {id:'quaest',nome:'Quaest',periodo:'10 a 13/10',amostra:'2.154 entrevistas, BR-08729/2026',
+      cands:{cury:[30,34,30],renan:[40,14,43],caiado:[42,23,33],outros:[37,25,35]},extra:'Zema e os demais recebem a média ponderada de Cury, Renan e Caiado.'},
+    {id:'nexus',nome:'Nexus/BTG',periodo:'10 a 12/10',amostra:'cerca de 2.000 entrevistas, BR-07997/2026',
+      cands:{cury:[43,41,13],renan:[37,30,33],caiado:[55,27,11],zema:[80,0,12],outros:[45,33,18]},extra:'Os demais recebem a média ponderada de Cury, Renan e Caiado.'},
+    {id:'datafolha',nome:'Datafolha',periodo:'13 e 14/10',amostra:'2.520 entrevistas, BR-00466/2026',
+      cands:{outros:[46,27,23]},extra:'Mediu Cury, Renan e Caiado juntos (46% Flávio, 27% Lula, 23% branco ou nulo); o mesmo vale para todos os demais.'},
+    {id:'verita',nome:'Veritá',periodo:'12 a 16/10',amostra:'15.554 entrevistas, BR-01107/2026',pendente:'A Veritá divulgou só o resultado (Flávio 51,1% x Lula 48,9% dos válidos); a tabela de migração por candidato ainda não está disponível.'}
+  ];
+  function aplicaPreset(p){
+    if(p.pendente)return;
+    st.split=padraoSplit();let bnPond=0;
+    OUTROS.forEach(c=>{if(typeof c.padrao==='number')return;const [F,L,bn]=p.cands[c.id]||p.cands.outros;st.split[c.id]=Math.round(F/(F+L)*100);bnPond+=c.votos*bn/(F+L+bn)});
+    st.bnOutros=Math.round(bnPond/O*100);
+    if(p.brancos){st.bnConv=p.brancos.conv;st.bnSplit=p.brancos.F}else{st.bnConv=0;st.bnSplit=50}
+    if(typeof p.novos==='number')st.novos=p.novos;
+    st.preset=p.id;render();
+  }
+  const elPresets=document.getElementById('presets');
+  PRESETS.forEach(p=>{const b=document.createElement('button');b.className='chip';b.id='preset-'+p.id;b.type='button';
+    b.textContent=`${p.nome} (${p.periodo})`+(p.pendente?' · aguardando tabela':'');if(p.pendente){b.disabled=true;b.style.opacity='.55';b.style.cursor='not-allowed';b.title=p.pendente}
+    b.addEventListener('click',()=>aplicaPreset(p));elPresets.appendChild(b)});
+  function renderPreset(){
+    const p=PRESETS.find(x=>x.id===st.preset);
+    PRESETS.forEach(x=>{const b=$('preset-'+x.id);if(b)b.classList.toggle('on',!!p&&x.id===p.id)});
+    if(!p){$('presetNota').innerHTML='Nenhuma pesquisa aplicada: finalistas fiéis, candidatos de esquerda (UP, PSTU, PCB e PCO) com Lula, demais divididos ao meio, ninguém muda para branco ou nulo. '+
+      '<span style="color:var(--faint)">Veritá (12 a 16/10): '+PRESETS.find(x=>x.id==='verita').pendente+'</span>';return}
+    $('presetNota').innerHTML=`Preenchido com <b>${p.nome}</b> (${p.periodo}, ${p.amostra}): os controles dos demais candidatos e a fatia deles que vota em branco ou nulo seguem a pesquisa${p.brancos?', assim como os brancos e nulos do 1º turno':''}${typeof p.novos==='number'?' e os eleitores que deixam de se abster':''}. Flávio e Lula seguem fiéis aos próprios eleitores, porque a pesquisa não mede a troca entre eles de forma comparável, e os eleitores de UP, PSTU, PCB e PCO ficam 100% com Lula. ${p.extra||''}`;
+  }
+  function salvar(){try{localStorage.setItem('sim2t2026v2',JSON.stringify(st))}catch(e){}}
+  function linkCenario(){const q=new URLSearchParams();q.set('c',CANDS.map(c=>Math.round(st.split[c.id]*10)/10).join('-'));
+    q.set('a',st.abst2.toFixed(2));q.set('n',st.novos);q.set('o',st.bnOutros);q.set('v',st.bnConv);q.set('p',st.bnSplit);if(st.preset)q.set('q',st.preset);
+    return location.origin+location.pathname+'#'+q.toString()}
+  function avisoCopia(t){const n=document.getElementById('copiadoNota');n.textContent=t;setTimeout(()=>{n.textContent=''},4000)}
+  document.getElementById('btCopiar').addEventListener('click',()=>{const u=linkCenario();
+    const ok=()=>avisoCopia('Link copiado. Quem abrir vê este cenário.');
+    const falha=()=>{avisoCopia('Não deu para copiar automaticamente. O link está na barra de endereço.');try{history.replaceState(null,'',u)}catch(e){}};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(ok,falha)}else falha()});
+  if(navigator.share){const b=document.getElementById('btCompartilhar');b.hidden=false;
+    b.addEventListener('click',()=>{navigator.share({title:'Simulador do 2º turno de 2026',text:'Meu cenário para o 2º turno Flávio x Lula',url:linkCenario()}).catch(()=>{})})}
+  function cl(v,a,b){v=Number(v);if(!isFinite(v))return a;return Math.min(b,Math.max(a,v))}
+
+  // ----- Formatação pt-BR -----
+  const fInt=v=>Math.round(v).toLocaleString('pt-BR');
+  const fPct=(v,d=2)=>v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+  const fPP=v=>(v>=0?'+':'−')+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' p.p.';
+  function fMi(v){const a=Math.abs(v);if(a>=1e6){const m=a/1e6;return m.toLocaleString('pt-BR',{minimumFractionDigits:m>=10?1:2,maximumFractionDigits:m>=10?1:2})+' mi'}
+    return Math.round(a/1e3).toLocaleString('pt-BR')+' mil'}
+
+  // ----- Cartões dos candidatos -----
+  const elCands=document.getElementById('cands');
+  CANDS.forEach(c=>{
+    const d=document.createElement('div');d.className='card';d.id='card-'+c.id;
+    d.innerHTML=`<div class="cab"><span class="t">${c.nome} (${c.partido})</span><span class="d">${fInt(c.votos)} votos · ${fPct(c.votos/VALID1*100)}</span></div>
+      <input type="range" class="split" id="sl-${c.id}" min="0" max="100" step="1" aria-label="Fatia dos eleitores de ${c.nome} que vota em Flávio">
+      <div class="pe"><span class="c-f" id="f-${c.id}"></span><span class="c-l" id="l-${c.id}"></span></div>`;
+    elCands.appendChild(d);
+    const sl=d.querySelector('input');sl.value=st.split[c.id];
+    sl.addEventListener('input',()=>{st.split[c.id]=Number(sl.value);st.preset=null;render()});
+  });
+  const slAbs=document.getElementById('slAbs'),slNovos=document.getElementById('slNovos'),
+        slBnOutros=document.getElementById('slBnOutros'),slBnConv=document.getElementById('slBnConv'),slBnSplit=document.getElementById('slBnSplit');
+  slAbs.addEventListener('input',()=>{st.abst2=Number(slAbs.value);render()});
+  slNovos.addEventListener('input',()=>{st.novos=Number(slNovos.value);st.preset=null;render()});
+  slBnOutros.addEventListener('input',()=>{st.bnOutros=Number(slBnOutros.value);st.preset=null;render()});
+  slBnConv.addEventListener('input',()=>{st.bnConv=Number(slBnConv.value);st.preset=null;render()});
+  slBnSplit.addEventListener('input',()=>{st.bnSplit=Number(slBnSplit.value);st.preset=null;render()});
+
+  // ----- Motor -----
+  function calc(){
+    const A=st.bnOutros/100,B=st.bnConv/100,C=st.bnSplit/100;
+    let F=0,L=0;const linhas=[];let oF=0,oL=0,oFin=0;
+    CANDS.forEach(c=>{const s=st.split[c.id]/100;const bn=c.fin?0:c.votos*A;const fin=c.votos-bn;const toF=fin*s,toL=fin-toF;
+      F+=toF;L+=toL;linhas.push({c,toF,toL,bn});if(!c.fin){oF+=toF;oL+=toL;oFin+=fin}});
+    const conv=B*BN1,convF=C*conv,convL=conv-convF;F+=convF;L+=convL;
+    const F0=F,L0=L;
+    const novos=ABS1-st.abst2/100*E;
+    let nF=0,nL=0;
+    if(novos>=0){nF=novos*st.novos/100;nL=novos-nF;F+=nF;L+=nL}
+    else{const sai=-novos;nF=sai*st.novos/100;nL=sai-nF;F=Math.max(0,F-nF);L=Math.max(0,L-nL)}
+    const valid=F+L,BN2=BN1-conv+A*O,COMP2=COMP1+novos,ABS2=E-COMP2;
+    return {F,L,F0,L0,valid,BN2,COMP2,ABS2,novos,nF,nL,conv,convF,convL,linhas,oF,oL,oFin,A,B,C};
+  }
+
+  // ----- Render -----
+  const $=id=>document.getElementById(id);
+  function setP(sl,v){sl.style.setProperty('--p',v+'%')}
+  function render(){
+    const r=calc();
+    const pF=r.F/r.valid*100,pL=100-pF;
+    $('pF').textContent=fPct(pF);$('pL').textContent=fPct(pL);
+    $('miF').textContent=fMi(r.F);$('miL').textContent=fMi(r.L);
+    $('barF').style.width=pF+'%';
+    const dif=r.L-r.F;
+    if(Math.abs(dif)<0.5){$('quem').innerHTML='<b>Empate</b> técnico no voto a voto'}
+    else{const v=dif>0?'Lula':'Flávio';$('quem').innerHTML=`<b>${v}</b> vence por ${fInt(Math.abs(dif))} votos (${Math.abs(pL-pF).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} p.p.)`}
+    $('rod2').textContent=`${fMi(r.valid)} de votos válidos · abstenção ${fPct(r.ABS2/E*100)} · brancos e nulos ${fPct(r.BN2/r.COMP2*100)}`;
+
+    r.linhas.forEach(({c,toF,toL})=>{const s=st.split[c.id];const sl=$('sl-'+c.id);if(Number(sl.value)!==s)sl.value=s;setP(sl,s);
+      $('f-'+c.id).textContent=`Flávio ${s}% · ${fMi(toF)}`;$('l-'+c.id).textContent=`Lula ${100-s}% · ${fMi(toL)}`});
+
+    // abstenção
+    if(Math.abs(Number(slAbs.value)-st.abst2)>0.005)slAbs.value=st.abst2;
+    setP(slAbs,(st.abst2-10)/25*100);
+    $('absAbs').textContent=`${fMi(r.ABS2)} de eleitores`;
+    $('absPct').textContent=`${fPct(st.abst2)} do eleitorado`;
+    const dpp=st.abst2-ABS1_PCT;
+    $('absDelta').textContent=Math.abs(dpp)<0.005?'igual ao 1º turno':`${fPP(dpp)} vs. 1º turno · ${r.novos>=0?'+':'−'}${fMi(Math.abs(r.novos))} votos`;
+    slNovos.value=st.novos;setP(slNovos,st.novos);
+    const sobe=r.novos<0,nenhum=Math.abs(r.novos)<1;
+    $('novosTit').textContent=sobe?'De que lado saem os eleitores que deixam de votar':'Para quem vão os eleitores que deixam de se abster';
+    $('novosQtd').textContent=nenhum?'nenhum eleitor novo':`${fMi(Math.abs(r.novos))} de ${sobe?'votos a menos':'novos votos'}`;
+    $('novosF').textContent=`Flávio ${st.novos}% · ${fMi(r.nF)}`;$('novosL').textContent=`Lula ${100-st.novos}% · ${fMi(r.nL)}`;
+    $('novosNota').innerHTML=nenhum?'Com a abstenção igual à do 1º turno, o segundo controle não tem efeito.':
+      sobe?`Com a abstenção maior, o segundo controle diz de que lado saem os votos. <button class="chip" id="btProp" style="padding:3px 9px;font-size:12px">Proporcional aos votos (Flávio ${Math.round(r.F0/(r.F0+r.L0)*100)}%)</button>`:
+      'Com a abstenção menor, os novos eleitores são divididos pelo segundo controle.';
+    const bp=$('btProp');if(bp)bp.addEventListener('click',()=>{st.novos=Math.round(r.F0/(r.F0+r.L0)*100);st.preset=null;render()});
+    atualizaPremissa();
+
+    // brancos e nulos
+    slBnOutros.value=st.bnOutros;setP(slBnOutros,st.bnOutros);slBnConv.value=st.bnConv;setP(slBnConv,st.bnConv);slBnSplit.value=st.bnSplit;setP(slBnSplit,st.bnSplit);
+    $('bnOutrosD').textContent=`${st.bnOutros}% · ${fMi(r.A*O)}`;
+    $('bnConvD').textContent=`${st.bnConv}% · ${fMi(r.conv)}`;
+    $('bnF').textContent=`Flávio ${st.bnSplit}% · ${fMi(r.convF)}`;$('bnL').textContent=`Lula ${100-st.bnSplit}% · ${fMi(r.convL)}`;
+    $('bnRes').innerHTML=`Brancos e nulos no 2º turno: <b>${fInt(r.BN2)}</b>, ${fPct(r.BN2/r.COMP2*100)} do comparecimento. No 1º turno de 2026 foram 4,77%; no 2º turno de 2018, 9,58%.`;
+
+    // texto
+    const sF=st.split.flavio,sL=100-st.split.lula;
+    const partes=[];
+    if(r.oFin>0)partes.push(`Com os controles atuais, Lula fica com <b>${fPct(r.oL/r.oFin*100,1)}</b> dos ${fMi(r.oFin)} de eleitores dos demais candidatos que escolhem um dos dois finalistas.`);
+    partes.push(`Flávio mantém ${sF}% dos próprios eleitores e Lula, ${sL}%.`);
+    // ponto de virada dos demais
+    if(r.oFin>0){const Fb=r.F-r.oF,Lb=r.L-r.oL;const s=(Lb+r.oFin-Fb)/(2*r.oFin);
+      if(s<0||s>1){const quem=s>1?'Flávio':'Lula';partes.push(`Com essa fidelidade dos finalistas, nem todos os eleitores dos demais candidatos bastariam para ${quem} empatar.`)}
+      else{const quem=s>=0.5?'Flávio':'Lula',v=s>=0.5?s:1-s;partes.push(`Com essa fidelidade dos finalistas, ${quem} precisaria, em média, de <b>${fPct(v*100,1)}</b> dos eleitores dos demais candidatos para empatar.`)}}
+    $('txt1').innerHTML=partes.join(' ');
+    let t2='';
+    if(r.novos>=1){const N=r.novos;const s=(r.L0-r.F0+N)/(2*N);
+      if(s<0||s>1){const quem=s>1?'Flávio':'Lula';t2=`Com os demais candidatos como estão, os ${fMi(N)} de novos eleitores não bastariam para ${quem} empatar, mesmo votando todos nele.`}
+      else{const quem=s>=0.5?'Flávio':'Lula',v=s>=0.5?s:1-s;t2=`Com os demais candidatos como estão, ${quem} precisaria de <b>${fPct(v*100,1)}</b> dos ${fMi(N)} de novos eleitores para empatar.`}}
+    else if(r.novos<=-1){t2=`Com a abstenção maior, ${fMi(-r.novos)} de eleitores do 1º turno deixam de votar; o controle acima diz de que lado eles saem.`}
+    else{t2='Com a abstenção igual à do 1º turno, não há eleitores novos para disputar.'}
+    $('txt2').innerHTML=t2;
+
+    // tabela
+    const tb=$('tab').querySelector('tbody'),tf=$('tab').querySelector('tfoot');
+    tb.innerHTML=r.linhas.map(({c,toF,toL,bn})=>`<tr><td>${c.nome} (${c.partido})</td><td>${fInt(c.votos)}</td><td class="c-f">${fInt(toF)}</td><td class="c-l">${fInt(toL)}</td><td>${bn?fInt(bn):'—'}</td></tr>`).join('')+
+      `<tr><td>Brancos e nulos do 1º turno</td><td>${fInt(BN1)}</td><td class="c-f">${fInt(r.convF)}</td><td class="c-l">${fInt(r.convL)}</td><td>${fInt(BN1-r.conv)}</td></tr>`+
+      `<tr><td>${r.novos>=0?'Eleitores que deixam de se abster':'Eleitores que deixam de votar'}</td><td>—</td><td class="c-f">${r.novos>=0?fInt(r.nF):'−'+fInt(r.nF)}</td><td class="c-l">${r.novos>=0?fInt(r.nL):'−'+fInt(r.nL)}</td><td>—</td></tr>`;
+    tf.innerHTML=`<tr><td>2º turno simulado</td><td>${fInt(r.COMP2)} comparecem</td><td class="c-f">${fInt(r.F)}</td><td class="c-l">${fInt(r.L)}</td><td>${fInt(r.BN2)}</td></tr>`;
+    renderPreset();
+    salvar();
+  }
+
+  // ----- Atalhos -----
+  $('btRestaurar').addEventListener('click',()=>{st.split=padraoSplit();st.preset=null;render()});
+  $('btEmpatar').addEventListener('click',()=>{const r=calc();if(r.oFin<=0)return;const Fb=r.F-r.oF,Lb=r.L-r.oL;const s=cl((Lb+r.oFin-Fb)/(2*r.oFin)*100,0,100);
+    OUTROS.forEach(c=>{if(typeof c.padrao!=='number')st.split[c.id]=Math.round(s*10)/10});st.preset=null;render()});
+  $('btAbsIgual').addEventListener('click',()=>{st.abst2=ABS1_PCT;render()});
+  $('btAbs2022').addEventListener('click',()=>{st.abst2=ABS1_PCT+VAR2022;render()});
+  $('btAbsMedia').addEventListener('click',()=>{st.abst2=ABS1_PCT+VARMEDIA;render()});
+  $('btBnZero').addEventListener('click',()=>{st.bnOutros=0;st.bnConv=0;st.preset=null;render()});
+  $('btBnIgual').addEventListener('click',()=>{st.preset=null;
+    const r=calc();const alvo=BN1/COMP1*r.COMP2;
+    // mantém a conversão como está e resolve a fatia dos demais; se não couber, mexe na conversão
+    let A=(alvo-BN1+r.conv)/O*100;
+    if(A>=0&&A<=100){st.bnOutros=Math.round(A)}
+    else{st.bnOutros=A<0?0:100;const B=(BN1+st.bnOutros/100*O-alvo)/BN1*100;st.bnConv=Math.round(cl(B,0,100))}
+    render()});
+
+  // ----- Gráfico de abstenção -----
+  const chart=$('chart');
+  const W=820,H=300,ml=40,mr=12,mt=14,mb=34,y0=10,y1=24;
+  const iw=W-ml-mr,ih=H-mt-mb;
+  const anos=HIST.map(h=>h.ano).concat([2026]);
+  const gw=iw/anos.length,bw=Math.min(22,gw*0.28),gap=4;
+  const Y=v=>mt+ih-(v-y0)/(y1-y0)*ih;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Abstenção por turno nas eleições presidenciais desde 1989"><g class="grid">`;
+  for(let v=y0;v<=y1;v+=2){svg+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${v}%</text>`}
+  svg+='</g>';
+  anos.forEach((ano,i)=>{
+    const cx=ml+gw*(i+0.5);const h=HIST.find(x=>x.ano===ano);
+    const t1=h?h.t1:ABS1_PCT,t2=h?h.t2:null;
+    const x1=cx-bw-gap/2,x2=cx+gap/2;
+    svg+=`<g class="grupo" data-ano="${ano}">`;
+    svg+=`<rect class="b1" x="${x1}" y="${Y(t1)}" width="${bw}" height="${Y(y0)-Y(t1)}" rx="2"/>`;
+    if(t2!=null)svg+=`<rect class="b2" x="${x2}" y="${Y(t2)}" width="${bw}" height="${Y(y0)-Y(t2)}" rx="2"/>`;
+    if(ano===2026)svg+=`<rect class="bp" id="barPrem" x="${x2}" y="${Y(21)}" width="${bw}" height="${Y(y0)-Y(21)}" rx="2"/>`;
+    svg+=`<text x="${cx}" y="${H-mb+18}" text-anchor="middle">${ano}</text>`;
+    svg+=`<rect class="hit" x="${ml+gw*i}" y="${mt}" width="${gw}" height="${ih}"/>`;
+    svg+='</g>';
+  });
+  svg+='</svg>';
+  chart.innerHTML=svg+'<div class="legenda"><span class="l1">1º turno</span><span class="l2">2º turno</span><span class="lp">Sua premissa para 2026</span></div><div class="tip" id="tip" hidden></div>';
+  function atualizaPremissa(){const b=$('barPrem');if(!b)return;const v=cl(st.abst2,y0,y1);b.setAttribute('y',Y(v));b.setAttribute('height',Math.max(0,Y(y0)-Y(v)))}
+  const tip=$('tip');
+  chart.querySelectorAll('.grupo').forEach(g=>{
+    const ano=Number(g.dataset.ano);
+    const mostra=(ev)=>{const h=HIST.find(x=>x.ano===ano);let html=`<b>${ano}</b><br>`;
+      if(h){html+=`<span class="sw" style="background:var(--bar1)"></span>1º turno: ${fPct(h.t1)}<br>`;html+=h.t2!=null?`<span class="sw" style="background:var(--bar2)"></span>2º turno: ${fPct(h.t2)}`:'<span class="sw" style="background:var(--bar2);opacity:.3"></span>sem 2º turno'}
+      else{html+=`<span class="sw" style="background:var(--bar1)"></span>1º turno: ${fPct(ABS1_PCT)}<br><span class="sw" style="border:1.5px solid var(--fg);box-sizing:border-box"></span>Sua premissa para 2026: ${fPct(st.abst2)}`}
+      tip.innerHTML=html;tip.hidden=false;
+      const r=chart.getBoundingClientRect();let x=ev.clientX-r.left+14,y=ev.clientY-r.top-10;
+      if(x+tip.offsetWidth>r.width-8)x=ev.clientX-r.left-tip.offsetWidth-14;tip.style.left=x+'px';tip.style.top=y+'px'};
+    g.addEventListener('pointermove',mostra);g.addEventListener('pointerenter',mostra);
+    g.addEventListener('pointerleave',()=>{tip.hidden=true});
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
